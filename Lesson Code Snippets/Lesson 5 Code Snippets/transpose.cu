@@ -200,6 +200,7 @@ int main(int argc, char **argv)
  * But this makes for messy code and our goal is teaching, not detailed benchmarking.
  */
 
+    cudaMemset(d_out, 0, numbytes);
 	timer.Start();
 	transpose_serial<<<1,1>>>(d_in, d_out);
 	timer.Stop();
@@ -207,6 +208,7 @@ int main(int argc, char **argv)
 	printf("transpose_serial: %g ms.\nVerifying transpose...%s\n", 
 	       timer.Elapsed(), compare_matrices(out, gold) ? "Failed" : "Success");
 
+    cudaMemset(d_out, 0, numbytes);
 	timer.Start();
 	transpose_parallel_per_row<<<1,N>>>(d_in, d_out);
 	timer.Stop();
@@ -217,6 +219,7 @@ int main(int argc, char **argv)
 	dim3 blocks(N/K,N/K); // blocks per grid
 	dim3 threads(K,K);	// threads per block
 
+    cudaMemset(d_out, 0, numbytes);
 	timer.Start();
 	transpose_parallel_per_element<<<blocks,threads>>>(d_in, d_out);
 	timer.Stop();
@@ -224,6 +227,7 @@ int main(int argc, char **argv)
 	printf("transpose_parallel_per_element: %g ms.\nVerifying transpose...%s\n",
 		   timer.Elapsed(), compare_matrices(out, gold) ? "Failed" : "Success");
 
+    cudaMemset(d_out, 0, numbytes);
 	timer.Start();
 	transpose_parallel_per_element_tiled<<<blocks,threads>>>(d_in, d_out);
 	timer.Stop();
@@ -234,6 +238,7 @@ int main(int argc, char **argv)
 	dim3 blocks16x16(N/16,N/16); // blocks per grid
 	dim3 threads16x16(16,16);	 // threads per block
 
+    cudaMemset(d_out, 0, numbytes);
 	timer.Start();
 	transpose_parallel_per_element_tiled16<<<blocks16x16,threads16x16>>>(d_in, d_out);
 	timer.Stop();
@@ -241,6 +246,7 @@ int main(int argc, char **argv)
 	printf("transpose_parallel_per_element_tiled 16x16: %g ms.\nVerifying ...%s\n", 
 		   timer.Elapsed(), compare_matrices(out, gold) ? "Failed" : "Success");
 	
+    cudaMemset(d_out, 0, numbytes);	
 	timer.Start();
  	transpose_parallel_per_element_tiled_padded16<<<blocks16x16,threads16x16>>>(d_in, d_out);
 	timer.Stop();
