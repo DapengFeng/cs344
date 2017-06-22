@@ -17,16 +17,44 @@ const int N 		= BLOCKSIZE*NUMBLOCKS;
  */
 __global__ void foo(float out[], float A[], float B[], float C[], float D[], float E[]){
 
-	int i = threadIdx.x + blockIdx.x*blockDim.x; 
+	int i = threadIdx.x + blockIdx.x*blockDim.x;
+	int tid = threadIdx.x;
+	 
+	__shared__ float sA[BLOCKSIZE];
+	__shared__ float sB[BLOCKSIZE];
+	__shared__ float sC[BLOCKSIZE];
+	__shared__ float sD[BLOCKSIZE];
+	__shared__ float sE[BLOCKSIZE];
 	
-	out[i] = (A[i] + B[i] + C[i] + D[i] + E[i]) / 5.0f;
+	sA[tid] = A[i];
+	sB[tid] = B[i];
+	sC[tid] = C[i];
+	sD[tid] = D[i];
+	sE[tid] = E[i];
+	
+	out[i] = (sA[tid] + sB[tid] + sC[tid] + sD[tid] + sE[tid]) / 5.0f;
 }
 
 __global__ void bar(float out[], float in[]) 
 {
 	int i = threadIdx.x + blockIdx.x*blockDim.x; 
+	int tid = threadIdx.x;
+	__shared__ float sdata[BLOCKSIZE + 4];
+	
+	if (tid == 0) {
+	  sdata[0] = in[i-2];
+	  sdata[1] = in[i-1];
+	  sdata[BLOCKSIZE+2] = in[i+BLOCKSIZE];
+	  sdata[BLOCKSIZE+3] = in[i+BLOCKSIZE+1];
+	}
+	
+	sdata[tid + 2] = in[i];
+	__syncthreads();
 
-	out[i] = (in[i-2] + in[i-1] + in[i] + in[i+1] + in[i+2]) / 5.0f;
+	// out[i] = (in[i-2] + in[i-1] + in[i] + in[i+1] + in[i+2]) / 5.0f;
+	if (tid < BLOCKSIZE) {
+	  out[i] = (sdata[tid] + sdata[tid+1] + sdata[tid+2] + sdata[tid+3] + sdata[tid+4]) / 5.0f;
+	}
 }
 
 void cpuFoo(float out[], float A[], float B[], float C[], float D[], float E[])
