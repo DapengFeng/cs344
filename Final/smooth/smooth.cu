@@ -6,7 +6,8 @@
 
 // Reference
 __global__ void smooth(float * v_new, const float * v) {
-    int myIdx = threadIdx.x * gridDim.x + blockIdx.x;
+    // int myIdx = threadIdx.x * gridDim.x + blockIdx.x;
+    int myIdx = threadIdx.x + blockIdx.x * blockDim.x;
     int numThreads = blockDim.x * gridDim.x;
     int myLeftIdx = (myIdx == 0) ? 0 : myIdx - 1;
     int myRightIdx = (myIdx == (numThreads - 1)) ? numThreads - 1 : myIdx + 1;
@@ -19,8 +20,20 @@ __global__ void smooth(float * v_new, const float * v) {
 // Your code
 __global__ void smooth_shared(float * v_new, const float * v) {
     extern __shared__ float s[];
-    // TODO: Fill in the rest of this function
-    return v[0];
+    // TODO: Complete the rest of this function
+    int myIdx = threadIdx.x + blockIdx.x * blockDim.x;
+    int numThreads = blockDim.x * gridDim.x;
+    int tid = threadIdx.x;
+    if (tid == 0) {
+      s[0] = (myIdx == 0) ? v[0] : v[myIdx - 1];
+      
+    }
+    if (tid == blockDim.x - 1) {
+      s[blockDim.x + 1] = (myIdx == (numThreads - 1)) ? v[numThreads - 1] : v[myIdx + 1];
+    }
+    s[tid+1] = v[myIdx];
+    __syncthreads();
+    v_new[myIdx] = 0.25f * s[tid] + 0.5f * s[tid+1] + 0.25f * s[tid+2];
 }
 
 int main(int argc, char **argv)

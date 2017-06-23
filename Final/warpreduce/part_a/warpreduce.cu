@@ -24,6 +24,20 @@ __device__ unsigned int shared_reduce(unsigned int p, volatile unsigned int * s)
     // 31, you're doing it wrong)
     //
     // TODO: Fill in the rest of this function
+    
+    int tid = threadIdx.x;
+    
+    s[tid] = p;
+    __syncthreads();
+    
+    for (unsigned int step = blockDim.x / 2; step > 0; step >>= 1)
+    {
+        if (tid < step)
+        {
+            s[tid] += s[tid + step];
+        }
+        __syncthreads();        // make sure all adds at one stage are done!
+    }
 
     return s[0];
 }
